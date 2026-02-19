@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Звонок…</title>
+</head>
+<body>
+  <p>Запускаю звонок…</p>
+  <script>
+    const p = new URLSearchParams(location.search);
+    const raw = (p.get("p") || "").replace(/\D/g, "");
+    const tel = raw.length === 10 ? `tel:+7${raw}` : `tel:${raw}`;
+    location.href = tel;
+  </script>
+</body>
+</html>
