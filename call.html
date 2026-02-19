@@ -3,42 +3,67 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Вызов</title>
+  <title>Звонок</title>
   <style>
     body{font-family:system-ui,-apple-system;display:flex;align-items:center;justify-content:center;height:100vh;margin:0}
-    .wrap{text-align:center;padding:24px;max-width:520px}
-    button{font-size:22px;padding:16px 22px;border-radius:14px;border:1px solid #ccc;background:#f7f7f7;cursor:pointer}
-    .num{margin-top:14px;font-size:14px;opacity:.75;word-break:break-all}
-    .raw{margin-top:10px;font-size:12px;opacity:.55;word-break:break-all}
+    .wrap{max-width:560px;padding:24px;text-align:center}
+    .btn{
+      display:inline-block;
+      font-size:22px;
+      padding:16px 22px;
+      border-radius:14px;
+      border:1px solid #ccc;
+      background:#f7f7f7;
+      text-decoration:none;
+      color:#000;
+    }
+    .row{margin-top:12px;font-size:13px;opacity:.75;word-break:break-all}
+    .muted{opacity:.55}
   </style>
 </head>
 <body>
   <div class="wrap">
-    <button id="call">📞 Вызов</button>
-    <div class="num" id="numText"></div>
-    <div class="raw" id="rawText"></div>
+    <a id="callLink" class="btn" href="#" target="_self" rel="noopener">📞 Открыть звонок</a>
+    <div class="row" id="telText"></div>
+    <div class="row muted" id="debug"></div>
+    <div class="row muted">Если Safari заблокировал автозвонок — нажми кнопку ещё раз.</div>
   </div>
 
   <script>
+    function toTelUrl(p) {
+      let d = String(p || "").replace(/\D/g, ""); // только цифры
+
+      // РФ:
+      if (/^9\d{9}$/.test(d)) return "tel:+7" + d;            // 10 цифр с 9
+      if (/^8\d{10}$/.test(d)) return "tel:+7" + d.slice(1); // 8XXXXXXXXXX
+      if (/^7\d{10}$/.test(d)) return "tel:+" + d;           // 7XXXXXXXXXX
+      if (d.length >= 10) return "tel:+" + d;                // fallback
+
+      return "";
+    }
+
     const params = new URLSearchParams(location.search);
     const rawP = params.get("p") || "";
-    document.getElementById("rawText").textContent = "Получено p: " + rawP;
+    const telUrl = toTelUrl(rawP);
 
-    // оставляем только цифры
-    let d = String(rawP).replace(/\D/g, "");
+    const callLink = document.getElementById("callLink");
+    const telText = document.getElementById("telText");
+    const debug = document.getElementById("debug");
 
-    // Приводим к 11-значному RU в виде +7XXXXXXXXXX
-    // твой кейс: 10 цифр и начинается с 9
-    if (/^9\d{9}$/.test(d)) d = "7" + d;          // 9XXXXXXXXX -> 79XXXXXXXXX
-    if (/^8\d{10}$/.test(d)) d = "7" + d.slice(1); // 8XXXXXXXXXX -> 7XXXXXXXXXX
+    debug.textContent = "p=" + rawP;
+    telText.textContent = telUrl ? ("Итог: " + telUrl) : "Номер не распознан";
 
-    const phone = d ? ("+" + d) : "";
-    document.getElementById("numText").textContent = phone ? ("Номер: " + phone) : "Номер не распознан";
+    if (!telUrl) {
+      callLink.textContent = "Номер не распознан";
+      callLink.removeAttribute("href");
+      callLink.style.opacity = "0.5";
+    } else {
+      callLink.href = telUrl;
 
-    document.getElementById("call").disabled = !phone;
-    document.getElementById("call").addEventListener("click", () => {
-      location.href = "facetime-audio:" + encodeURIComponent(phone);
-    });
+      // Авто-попытка сразу открыть tel:+7...
+      // (Safari может показать “вызов заблокирован” — это нормально)
+      setTimeout(() => { window.location.href = telUrl; }, 50);
+    }
   </script>
 </body>
 </html>
