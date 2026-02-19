@@ -5,20 +5,59 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Вызов</title>
   <style>
-    body{font-family:system-ui,-apple-system;display:flex;align-items:center;justify-content:center;height:100vh;margin:0}
-    button{font-size:22px;padding:16px 22px;border-radius:14px;border:1px solid #ccc;cursor:pointer}
-    .hint{position:fixed;bottom:18px;opacity:.7;font-size:13px}
+    body{
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      display:flex; align-items:center; justify-content:center;
+      height:100vh; margin:0; background:#fff;
+    }
+    .wrap{ text-align:center; padding:24px; max-width:520px; }
+    button{
+      font-size:22px; padding:16px 22px;
+      border-radius:14px; border:1px solid #cfcfcf;
+      background:#f7f7f7; cursor:pointer;
+    }
+    button:active{ transform: translateY(1px); }
+    .num{ margin-top:14px; font-size:14px; opacity:.75; word-break:break-all; }
+    .hint{ margin-top:10px; font-size:12px; opacity:.6; }
   </style>
 </head>
 <body>
-  <button id="call">📞 Вызов</button>
-  <div class="hint">Если Safari спросит — разреши вызов.</div>
+  <div class="wrap">
+    <button id="callBtn">📞 Вызов</button>
+    <div class="num" id="numText"></div>
+    <div class="hint">Если Safari спросит — разреши вызов.</div>
+  </div>
+
   <script>
-    const p = new URLSearchParams(location.search);
-    const raw = (p.get("p") || "").replace(/\D/g, "");
-    const tel = raw.length === 10 ? `tel:+7${raw}` : `tel:${raw}`;
-    document.getElementById("call").addEventListener("click", () => {
-      location.href = tel;
+    function normalizePhone(rawDigits) {
+      // Оставляем только цифры
+      const d = (rawDigits || "").replace(/\D/g, "");
+
+      // Твой кейс: 10 цифр, начинается с 9 -> +7XXXXXXXXXX
+      if (/^9\d{9}$/.test(d)) return "+7" + d;
+
+      // Частые варианты, на всякий случай
+      if (/^8\d{10}$/.test(d)) return "+7" + d.slice(1); // 8XXXXXXXXXX -> +7XXXXXXXXXX
+      if (/^7\d{10}$/.test(d)) return "+" + d;           // 7XXXXXXXXXX -> +7XXXXXXXXXX
+      if (/^\d{11,15}$/.test(d)) return "+" + d;         // международный без плюса
+
+      // Если не похоже на номер — возвращаем как есть (FaceTime может не принять)
+      return d;
+    }
+
+    const params = new URLSearchParams(location.search);
+    const p = params.get("p") || "";
+    const phone = normalizePhone(p);
+
+    const numText = document.getElementById("numText");
+    numText.textContent = phone ? ("Номер: " + phone) : "Номер не передан (добавь ?p=...)";
+
+    const callBtn = document.getElementById("callBtn");
+    callBtn.disabled = !phone;
+
+    callBtn.addEventListener("click", () => {
+      // ВАЖНО: facetime-audio = без камеры
+      location.href = "facetime-audio:" + encodeURIComponent(phone);
     });
   </script>
 </body>
