@@ -3,15 +3,23 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Звонок…</title>
+  <title>Вызов</title>
+  <style>
+    body{font-family:system-ui,-apple-system;display:flex;align-items:center;justify-content:center;height:100vh;margin:0}
+    button{font-size:22px;padding:16px 22px;border-radius:14px;border:1px solid #ccc;cursor:pointer}
+    .hint{position:fixed;bottom:18px;opacity:.7;font-size:13px}
+  </style>
 </head>
 <body>
-  <p>Запускаю звонок…</p>
+  <button id="call">📞 Вызов</button>
+  <div class="hint">Если Safari спросит — разреши вызов.</div>
   <script>
     const p = new URLSearchParams(location.search);
     const raw = (p.get("p") || "").replace(/\D/g, "");
     const tel = raw.length === 10 ? `tel:+7${raw}` : `tel:${raw}`;
-    location.href = tel;
+    document.getElementById("call").addEventListener("click", () => {
+      location.href = tel;
+    });
   </script>
 </body>
 </html>
